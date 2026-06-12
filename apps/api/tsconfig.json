@@ -8,7 +8,11 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@openfoodfacts/openfoodfacts-nodejs": ["node_modules/@openfoodfacts/openfoodfacts-nodejs/dist/types/src/index.d.ts"]
+    }
   },
   "include": ["src/**/*"]
 }

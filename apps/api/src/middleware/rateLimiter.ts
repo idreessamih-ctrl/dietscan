@@ -33,3 +33,15 @@ export const authLimiter = rateLimit({
     message: "Too many authentication requests, please try again after 15 minutes.",
   },
 });
+
+// Products lookup: 30 requests per 1 minute
+export const productsLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 30,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  store,
+  message: {
+    message: "Too many lookup requests, please try again after a minute.",
+  },
+});

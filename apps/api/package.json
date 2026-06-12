@@ -6,15 +6,19 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "tsx watch src/index.ts"
+    "dev": "tsx watch src/index.ts",
+    "postinstall": "node -e \"const fs = require('fs'); const p = './node_modules/@openfoodfacts/openfoodfacts-nodejs/package.json'; if (fs.existsSync(p)) { const j = JSON.parse(fs.readFileSync(p, 'utf8')); j.main = './dist/cjs/src/index.js'; j.exports['.'] = { import: './dist/esm/src/index.js', require: './dist/cjs/src/index.js', types: './dist/types/src/index.d.ts' }; fs.writeFileSync(p, JSON.stringify(j, null, 2)); }\""
   },
   "dependencies": {
+    "@openfoodfacts/openfoodfacts-nodejs": "^2.0.0-alpha.32",
     "cors": "2.8.6",
     "dotenv": "16.5.0",
+    "drizzle-orm": "^0.41.0",
     "express": "5.2.1",
     "express-rate-limit": "8.5.2",
     "helmet": "8.2.0",
     "ioredis": "5.6.1",
+    "json-rules-engine": "^7.3.1",
     "pg": "8.21.0",
     "rate-limit-redis": "5.0.0",
     "supertokens-node": "24.0.2",
@@ -25,6 +29,7 @@
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.1",
     "@types/pg": "^8.11.11",
+    "drizzle-kit": "^0.30.0",
     "tsx": "^4.19.2",
     "typescript": "5.7.3"
   }

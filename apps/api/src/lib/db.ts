@@ -1,4 +1,5 @@
 import { Pool, QueryResult, QueryResultRow } from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
 import { config } from "../config";
 
 export const pool = new Pool({
@@ -10,6 +11,8 @@ export const pool = new Pool({
   max: 10,
 });
 
+export const db = drizzle(pool);
+
 /**
  * Executes a parameterized SQL query.
  * All SQL statements must be parameterized.
@@ -20,3 +23,4 @@ export async function query<T extends QueryResultRow = QueryResultRow>(
 ): Promise<QueryResult<T>> {
   return pool.query<T>(text, params);
 }
+

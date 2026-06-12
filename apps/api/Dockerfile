@@ -5,6 +5,6 @@ COPY package*.json ./
 RUN npm ci
 COPY . .
 RUN npm run build
-RUN npm prune --omit=dev
+RUN chmod +x start.sh
 EXPOSE 3001
-CMD ["node", "dist/index.js"]
+CMD ["./start.sh"]

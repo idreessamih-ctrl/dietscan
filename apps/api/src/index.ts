@@ -10,6 +10,8 @@ import { defaultLimiter } from "./middleware/rateLimiter";
 import { errorHandler } from "./middleware/errorHandler";
 import healthRouter from "./routes/health";
 import authRouter from "./routes/auth";
+import scansRouter from "./routes/scans";
+import productsRouter from "./routes/products";
 
 // Initialize SuperTokens
 // Note: supertokens_core connection to the 'dietscan_auth' database is handled
@@ -61,6 +63,8 @@ app.use(superTokensMiddleware());
 // Routes
 app.use("/health", healthRouter);
 app.use("/api/auth", authRouter);
+app.use("/scans", scansRouter);
+app.use("/products", productsRouter);
 
 // SuperTokens error handler (must be registered after all routes but before the custom error handler)
 app.use(superTokensErrorHandler());
