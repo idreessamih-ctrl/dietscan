@@ -18,6 +18,7 @@ const envSchema = z.object({
 
   SUPERTOKENS_URI: z.string().url().default("http://supertokens:3567"),
   SUPERTOKENS_API_KEY: z.string().default("some-random-api-key"),
+  SUPERTOKENS_COOKIE_DOMAIN: z.string().optional(),
 
   VALKEY_URL: z.string().default("redis://valkey:6379"),
 

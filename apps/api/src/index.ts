@@ -45,7 +45,7 @@ if (process.env.NODE_ENV !== "test") {
       EmailPassword.init(),
       Session.init({
         // Cookie domain config for development environment
-        cookieDomain: config.NODE_ENV === "development" ? "localhost" : undefined,
+        cookieDomain: config.SUPERTOKENS_COOKIE_DOMAIN || (config.NODE_ENV === "development" ? "localhost" : undefined),
       }),
     ],
   });
