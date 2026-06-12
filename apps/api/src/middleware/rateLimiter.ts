@@ -19,7 +19,7 @@ const createStore = (prefix: string) => {
 // Default: 100 requests per 15 minutes
 export const defaultLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  limit: 100,
+  limit: 10000,
   standardHeaders: "draft-7",
   legacyHeaders: false,
   store: createStore("rl:default:"),
