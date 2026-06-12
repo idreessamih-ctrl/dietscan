@@ -1,46 +1,40 @@
-import { Router } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import { optionalSession } from "../middleware/auth";
 import { evaluateIngredients } from "../rules/engine";
+import { z } from "zod";
 
 const router = Router();
 
+const scanSchema = z.object({
+  ingredients: z.array(z.string()),
+  protocolSlug: z.string(),
+});
+
 /**
- * POST /scans/ingredients
+ * POST /scans/ingredients or POST /scans
  * Public endpoint to evaluate a raw ingredients list against a protocol.
- * Uses optionalSession middleware to extract session if present.
+ * Validates inputs using zod.
  */
-router.post("/ingredients", optionalSession, async (req, res, next) => {
+async function handleScan(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const { ingredients, protocolSlug } = req.body as {
-      ingredients?: unknown;
-      protocolSlug?: unknown;
-    };
-
-    if (!ingredients || !Array.isArray(ingredients)) {
-      res.status(400).json({ message: "ingredients must be an array of strings" });
+    const parsed = scanSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        message: "Invalid input. 'ingredients' must be an array of strings and 'protocolSlug' must be a string.",
+        errors: parsed.error.errors,
+      });
       return;
     }
 
-    if (!protocolSlug || typeof protocolSlug !== "string") {
-      res.status(400).json({ message: "protocolSlug must be a string" });
-      return;
-    }
-
-    // Verify all items in ingredients array are strings
-    const ingredientsArray: string[] = [];
-    for (const item of ingredients) {
-      if (typeof item !== "string") {
-        res.status(400).json({ message: "All items in ingredients must be strings" });
-        return;
-      }
-      ingredientsArray.push(item);
-    }
-
-    const report = await evaluateIngredients(protocolSlug, ingredientsArray);
+    const { ingredients, protocolSlug } = parsed.data;
+    const report = await evaluateIngredients(protocolSlug, ingredients);
     res.json(report);
   } catch (error) {
     next(error);
   }
-});
+}
+
+router.post("/ingredients", optionalSession, handleScan);
+router.post("/", optionalSession, handleScan);
 
 export default router;

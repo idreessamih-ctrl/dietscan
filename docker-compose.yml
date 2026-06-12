@@ -47,10 +47,12 @@ services:
     environment:
       MEILI_ENV: development
       MEILI_NO_ANALYTICS: "true"
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
     volumes:
-      - meili_data:/meili_data
+      - meilisearch_data:/meili_data
     networks:
       - app-network
+      - db-network
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.meilisearch.rule=Host(`${MEILISEARCH_HOST}`)"
@@ -113,6 +115,8 @@ services:
       SUPERTOKENS_API_KEY: ${SUPERTOKENS_API_KEY}
       VALKEY_URL: ${VALKEY_URL}
       JWT_SECRET: ${JWT_SECRET}
+      MEILI_URL: http://meilisearch:7700
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
     networks:
       - app-network
       - db-network
@@ -298,7 +302,7 @@ volumes:
     name: dietscan_postgres_data
   valkey_data:
     name: dietscan_valkey_data
-  meili_data:
+  meilisearch_data:
     name: dietscan_meili_data
   traefik_acme:
     name: dietscan_traefik_acme

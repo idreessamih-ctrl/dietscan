@@ -22,6 +22,9 @@ const envSchema = z.object({
   VALKEY_URL: z.string().default("redis://valkey:6379"),
 
   JWT_SECRET: z.string().default("change_me_in_production_use_64_char_random"),
+
+  MEILI_URL: z.string().default("http://meilisearch:7700"),
+  MEILI_MASTER_KEY: z.string().default("change_me_in_production"),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

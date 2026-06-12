@@ -7,8 +7,10 @@ export interface Violation {
 
 export interface ComplianceReport {
   passed: boolean;
-  violations: Violation[];
   score: number;
+  violations: Violation[];
+  compliantIngredients: string[];
+  flaggedIngredients: string[];
 }
 
 export interface ProtocolRules {

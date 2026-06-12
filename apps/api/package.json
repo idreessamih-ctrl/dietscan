@@ -19,6 +19,7 @@
     "helmet": "8.2.0",
     "ioredis": "5.6.1",
     "json-rules-engine": "^7.3.1",
+    "meilisearch": "^0.48.0",
     "pg": "8.21.0",
     "rate-limit-redis": "5.0.0",
     "supertokens-node": "24.0.2",

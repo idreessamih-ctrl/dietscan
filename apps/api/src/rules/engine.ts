@@ -2,6 +2,7 @@ import { Engine } from "json-rules-engine";
 import { query } from "../lib/db";
 import { SEED_PROTOCOLS } from "./protocols";
 import { Violation, ComplianceReport, ProtocolRules } from "./types";
+import { cacheGet, cacheSet } from "../lib/cache";
 
 /**
  * Evaluates a list of ingredient strings against a dietary protocol.
@@ -12,19 +13,25 @@ export async function evaluateIngredients(
   protocolSlug: string,
   ingredients: string[]
 ): Promise<ComplianceReport> {
-  // 1. Load protocol rules from the dietary_protocols table
-  const protocolResult = await query<{ rules_json: unknown }>(
-    "SELECT rules_json FROM dietary_protocols WHERE slug = $1",
-    [protocolSlug]
-  );
+  // 1. Load protocol rules (cache in Valkey, TTL 1h = 3600s)
+  const cacheKey = `protocol_rules:${protocolSlug}`;
+  let rules = await cacheGet<ProtocolRules>(cacheKey);
 
-  let rules: ProtocolRules;
-  if (protocolResult.rows.length > 0) {
-    rules = protocolResult.rows[0].rules_json as ProtocolRules;
-  } else if (SEED_PROTOCOLS[protocolSlug]) {
-    rules = SEED_PROTOCOLS[protocolSlug].rules;
-  } else {
-    rules = { banned_ingredients: [], banned_categories: [], allowed_exceptions: [] };
+  if (!rules) {
+    const protocolResult = await query<{ rules_json: unknown }>(
+      "SELECT rules_json FROM dietary_protocols WHERE slug = $1",
+      [protocolSlug]
+    );
+
+    if (protocolResult.rows.length > 0) {
+      rules = protocolResult.rows[0].rules_json as ProtocolRules;
+      await cacheSet(cacheKey, rules, 3600);
+    } else if (SEED_PROTOCOLS[protocolSlug]) {
+      rules = SEED_PROTOCOLS[protocolSlug].rules;
+      await cacheSet(cacheKey, rules, 3600);
+    } else {
+      rules = { banned_ingredients: [], banned_categories: [], allowed_exceptions: [] };
+    }
   }
 
   // 2. Fetch all ingredients, ingredient_aliases, and exclusion_list from the DB
@@ -202,9 +209,16 @@ export async function evaluateIngredients(
     ? Math.round(((ingredients.length - uniqueViolatedIngredients.size) / ingredients.length) * 100)
     : 100;
 
+  const flaggedIngredients = Array.from(uniqueViolatedIngredients);
+  const compliantIngredients = ingredients.filter(
+    (ing) => !uniqueViolatedIngredients.has(ing)
+  );
+
   return {
     passed: violations.length === 0,
-    violations,
     score,
+    violations,
+    compliantIngredients,
+    flaggedIngredients,
   };
 }
