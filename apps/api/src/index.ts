@@ -17,7 +17,11 @@ import productsRouter from "./routes/products";
 import searchRouter from "./routes/search";
 import clicksRouter from "./routes/clicks";
 import syncRouter from "./routes/sync";
+import shoppingRouter from "./routes/shopping";
+import mealPlansRouter from "./routes/meal-planner";
+import notificationsRouter from "./routes/notifications";
 import { initMeilisearch } from "./lib/meilisearch";
+import { startScheduler } from "./lib/scheduler";
 
 // Initialize SuperTokens
 // Note: supertokens_core connection to the 'dietscan_auth' database is handled
@@ -75,6 +79,9 @@ app.use("/search", searchRouter);
 app.use("/api/v1/sync", syncRouter);
 app.use("/", searchRouter);
 app.use("/", clicksRouter);
+app.use("/shopping", shoppingRouter);
+app.use("/meal-plans", mealPlansRouter);
+app.use("/notifications", notificationsRouter);
 
 // SuperTokens error handler (must be registered after all routes but before the custom error handler)
 app.use(superTokensErrorHandler());
@@ -89,5 +96,7 @@ app.listen(config.API_PORT, () => {
   console.log(`[API] Server is listening on port ${config.API_PORT} in ${config.NODE_ENV} mode`);
   // Initialize Meilisearch index settings asynchronously on start
   initMeilisearch().catch(err => console.error("Meilisearch initialization failed:", err));
+  // Start the background push notification scheduler
+  startScheduler();
 });
 

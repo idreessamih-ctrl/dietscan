@@ -10,9 +10,16 @@ import { ScanResult } from "../store/scanStore";
 import { OfflineIndicator } from "../components/OfflineIndicator";
 import { startAutoSync, stopAutoSync } from "../services/sync";
 
+import { navigationRef } from "./navigationRef";
+
+import { registerForPushNotificationsAsync, setupNotificationListeners } from "../services/notifications";
+
+import { NavigatorScreenParams } from "@react-navigation/native";
+import { MainTabParamList } from "./MainTabs";
+
 export type RootStackParamList = {
   Auth: undefined;
-  Main: undefined;
+  Main: NavigatorScreenParams<MainTabParamList>;
   ScanResult: { result: ScanResult };
 };
 
@@ -29,13 +36,28 @@ export const RootNavigator = () => {
     };
   }, [initialize]);
 
+  useEffect(() => {
+    const cleanup = setupNotificationListeners();
+    return () => {
+      cleanup();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (session) {
+      registerForPushNotificationsAsync().catch((err) =>
+        console.error("[Notifications] Registration error in RootNavigator:", err)
+      );
+    }
+  }, [session]);
+
   if (isLoading) {
     return <LoadingSpinner />;
   }
 
   return (
     <>
-      <NavigationContainer>
+      <NavigationContainer ref={navigationRef}>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           {session ? (
             <>

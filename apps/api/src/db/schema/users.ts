@@ -11,6 +11,7 @@ export const users = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     email: varchar("email", { length: 255 }).unique().notNull(),
     dietaryProtocol: varchar("dietary_protocol", { length: 50 }).references(() => dietaryProtocols.slug, { onDelete: "set null" }),
+    pushToken: varchar("push_token", { length: 255 }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
