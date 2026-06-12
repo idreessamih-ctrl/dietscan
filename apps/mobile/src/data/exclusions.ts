@@ -1,0 +1,20 @@
+export const EXCLUSIONS = [
+  "coconut milk",
+  "cocoa butter",
+  "almond milk",
+  "soy milk",
+  "oat milk",
+  "rice milk",
+  "coconut oil",
+  "shea butter",
+  "peanut butter",
+  "almond butter",
+  "cashew butter",
+  "sunflower seed butter",
+  "apple cider vinegar",
+  "balsamic vinegar",
+  "red wine vinegar",
+  "white wine vinegar",
+  "coconut aminos",
+  "cacao butter"
+];

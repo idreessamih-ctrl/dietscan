@@ -5,10 +5,13 @@ import { useAuth } from "../store/useAuth";
 import { AuthStack } from "./AuthStack";
 import { MainTabs } from "./MainTabs";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { ScanResultScreen } from "../screens/ScanResultScreen";
+import { ScanResult } from "../store/scanStore";
 
 export type RootStackParamList = {
   Auth: undefined;
   Main: undefined;
+  ScanResult: { result: ScanResult };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -28,7 +31,10 @@ export const RootNavigator = () => {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {session ? (
-          <Stack.Screen name="Main" component={MainTabs} />
+          <>
+            <Stack.Screen name="Main" component={MainTabs} />
+            <Stack.Screen name="ScanResult" component={ScanResultScreen} />
+          </>
         ) : (
           <Stack.Screen name="Auth" component={AuthStack} />
         )}

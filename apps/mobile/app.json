@@ -10,6 +10,9 @@
     },
     "android": {
       "package": "com.dietscan.mobile"
-    }
+    },
+    "plugins": [
+      "react-native-vision-camera"
+    ]
   }
 }
