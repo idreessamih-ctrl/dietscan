@@ -26,28 +26,30 @@ import gdprRouter from "./routes/gdpr";
 import { initMeilisearch } from "./lib/meilisearch";
 import { startScheduler } from "./lib/scheduler";
 
-// Initialize SuperTokens
+// Initialize SuperTokens (skip in test environment)
 // Note: supertokens_core connection to the 'dietscan_auth' database is handled
 // by the SuperTokens Core service (configured via POSTGRESQL_CONNECTION_URI in docker-compose)
-SuperTokens.init({
-  framework: "express",
-  supertokens: {
-    connectionURI: config.SUPERTOKENS_URI,
-    apiKey: config.SUPERTOKENS_API_KEY,
-  },
-  appInfo: {
-    appName: "DietScan",
-    apiDomain: config.API_DOMAIN,
-    websiteDomain: config.WEBSITE_DOMAIN,
-  },
-  recipeList: [
-    EmailPassword.init(),
-    Session.init({
-      // Cookie domain config for development environment
-      cookieDomain: config.NODE_ENV === "development" ? "localhost" : undefined,
-    }),
-  ],
-});
+if (process.env.NODE_ENV !== "test") {
+  SuperTokens.init({
+    framework: "express",
+    supertokens: {
+      connectionURI: config.SUPERTOKENS_URI,
+      apiKey: config.SUPERTOKENS_API_KEY,
+    },
+    appInfo: {
+      appName: "DietScan",
+      apiDomain: config.API_DOMAIN,
+      websiteDomain: config.WEBSITE_DOMAIN,
+    },
+    recipeList: [
+      EmailPassword.init(),
+      Session.init({
+        // Cookie domain config for development environment
+        cookieDomain: config.NODE_ENV === "development" ? "localhost" : undefined,
+      }),
+    ],
+  });
+}
 
 const app = express();
 
@@ -80,7 +82,6 @@ app.use("/scans", scansRouter);
 app.use("/products", productsRouter);
 app.use("/search", searchRouter);
 app.use("/api/v1/sync", syncRouter);
-app.use("/", searchRouter);
 app.use("/", clicksRouter);
 app.use("/shopping", shoppingRouter);
 app.use("/meal-plans", mealPlansRouter);

@@ -4,12 +4,14 @@ import { query } from "../lib/db";
 import { verifySession, resolveUser, CustomRequest } from "../middleware/auth";
 import { sendPushNotification } from "../services/notifications";
 
-// Ensure the push_token column exists in users table
-query("ALTER TABLE users ADD COLUMN IF NOT EXISTS push_token VARCHAR(255)")
-  .then(() => console.log("[Database] push_token column verified/added successfully"))
-  .catch((err) => console.error("[Database] Error ensuring push_token column:", err));
-
 const router = Router();
+
+// Ensure push_token column exists (non-blocking, runs once at startup)
+if (process.env.NODE_ENV !== "test") {
+  query("ALTER TABLE users ADD COLUMN IF NOT EXISTS push_token VARCHAR(255)")
+    .then(() => console.log("[Database] push_token column verified/added successfully"))
+    .catch((err) => console.error("[Database] Error ensuring push_token column:", err));
+}
 
 const registerTokenSchema = z.object({
   token: z.string().min(1),

@@ -22,6 +22,7 @@ CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) UNIQUE NOT NULL,
     dietary_protocol VARCHAR(50) REFERENCES dietary_protocols(slug) ON DELETE SET NULL,
+    push_token TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

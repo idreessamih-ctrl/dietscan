@@ -147,11 +147,10 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgres://dietscan:password@postgres:5432/glitchtip
+      DATABASE_URL: postgres://dietscan:${POSTGRES_PASSWORD}@postgres:5432/glitchtip
       DATABASE_POOL_MAX: 5
-      CELERY_BROKER_URL: redis://valkey:6379/1
+      CELERY_BROKER_URL: redis://valkey:6379/0
       SECRET_KEY: ${GLITCHTIP_SECRET_KEY}
-      PORT: 8000
       GLITCHTIP_DOMAIN: https://${GLITCHTIP_HOST}
       GLITCHTIP_MAX_CONNECTIONS: 5
     networks:

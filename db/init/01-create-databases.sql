@@ -1,5 +1,5 @@
 -- Create the database role
-CREATE ROLE dietscan WITH LOGIN PASSWORD 'password' SUPERUSER;
+CREATE ROLE dietscan WITH LOGIN PASSWORD 'change_me_in_production' SUPERUSER;
 
 -- Create the 5 required databases for the DietScan platform
 CREATE DATABASE dietscan_core;

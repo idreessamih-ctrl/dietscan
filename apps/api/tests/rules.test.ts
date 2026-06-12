@@ -1,14 +1,9 @@
-import { evaluateIngredients } from "../src/rules/engine";
-import { query } from "../src/lib/db";
-
 jest.mock("ioredis", () => {
-  return jest.fn().mockImplementation(() => {
-    return {
-      get: jest.fn().mockResolvedValue(null),
-      set: jest.fn().mockResolvedValue("OK"),
-      on: jest.fn(),
-    };
-  });
+  return jest.fn().mockImplementation(() => ({
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue("OK"),
+    on: jest.fn(),
+  }));
 });
 
 jest.mock("../src/lib/db", () => ({
@@ -19,6 +14,9 @@ jest.mock("../src/lib/cache", () => ({
   cacheGet: jest.fn().mockResolvedValue(null),
   cacheSet: jest.fn().mockResolvedValue(undefined),
 }));
+
+import { evaluateIngredients } from "../src/rules/engine";
+import { query } from "../src/lib/db";
 
 describe("evaluateIngredients - Rules Engine", () => {
   beforeEach(() => {

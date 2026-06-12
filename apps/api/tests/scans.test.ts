@@ -1,22 +1,44 @@
-import request from "supertest";
-import { Request, Response, NextFunction } from "express";
+// Mocks must come FIRST — jest hoists them above imports
+jest.mock("@sentry/node", () => ({
+  init: jest.fn(),
+  setupExpressErrorHandler: jest.fn(),
+  captureException: jest.fn(),
+}));
+
+jest.mock("supertokens-node", () => ({
+  init: jest.fn(),
+  getAllCORSHeaders: jest.fn(() => []),
+  getUser: jest.fn().mockResolvedValue(null),
+  deleteUser: jest.fn().mockResolvedValue(undefined),
+}));
+
+jest.mock("supertokens-node/recipe/session", () => ({
+  default: { init: jest.fn(() => ({})) },
+}));
+
+jest.mock("supertokens-node/recipe/emailpassword", () => ({
+  default: { init: () => ({}) },
+}));
+
+jest.mock("supertokens-node/recipe/session/framework/express", () => ({
+  verifySession: jest.fn(() => (req, res, next) => next()),
+}));
+
+jest.mock("supertokens-node/framework/express", () => ({
+  middleware: jest.fn(() => (req, res, next) => next()),
+  errorHandler: jest.fn(() => (err, req, res, next) => next(err)),
+}));
 
 jest.mock("../src/lib/off", () => ({
   lookupBarcode: jest.fn().mockResolvedValue(null),
 }));
 
-import app from "../src/index";
-import { query } from "../src/lib/db";
-import { CustomRequest } from "../src/middleware/auth";
-
 jest.mock("ioredis", () => {
-  return jest.fn().mockImplementation(() => {
-    return {
-      get: jest.fn().mockResolvedValue(null),
-      set: jest.fn().mockResolvedValue("OK"),
-      on: jest.fn(),
-    };
-  });
+  return jest.fn().mockImplementation(() => ({
+    get: jest.fn().mockResolvedValue(null),
+    set: jest.fn().mockResolvedValue("OK"),
+    on: jest.fn(),
+  }));
 });
 
 jest.mock("../src/lib/db", () => ({
@@ -24,9 +46,9 @@ jest.mock("../src/lib/db", () => ({
 }));
 
 jest.mock("../src/middleware/auth", () => ({
-  verifySession: (req: Request, res: Response, next: NextFunction) => next(),
-  optionalSession: (req: Request, res: Response, next: NextFunction) => next(),
-  resolveUser: (req: CustomRequest, res: Response, next: NextFunction) => {
+  verifySession: (req, res, next) => next(),
+  optionalSession: (req, res, next) => next(),
+  resolveUser: (req, res, next) => {
     req.dbUser = {
       id: "test-user-id",
       email: "test@example.com",
@@ -36,6 +58,10 @@ jest.mock("../src/middleware/auth", () => ({
     next();
   },
 }));
+
+import request from "supertest";
+import app from "../src/index";
+import { query } from "../src/lib/db";
 
 describe("POST /scans/ingredients", () => {
   beforeEach(() => {
