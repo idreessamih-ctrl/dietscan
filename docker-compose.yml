@@ -92,30 +92,27 @@ services:
       retries: 5
 
   api:
-    image: node:20-alpine
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
     container_name: dietscan-api
     restart: unless-stopped
     ports:
       - "3001:3001"
-    command: >
-      node -e "
-      const http = require('http');
-      http.createServer((req, res) => {
-        if (req.url === '/health') {
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ status: 'healthy' }));
-        } else {
-          res.writeHead(404);
-          res.end();
-        }
-      }).listen(3001);
-      "
     environment:
-      PORT: 3001
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/dietscan_core
-      VALKEY_URL: redis://valkey:6379/0
-      MEILI_URL: http://meilisearch:7700
-      SUPERTOKENS_URL: http://supertokens:3567
+      API_PORT: ${API_PORT}
+      NODE_ENV: ${NODE_ENV}
+      API_DOMAIN: ${API_DOMAIN}
+      WEBSITE_DOMAIN: ${WEBSITE_DOMAIN}
+      PGHOST: ${PGHOST}
+      PGPORT: ${PGPORT}
+      PGUSER: ${PGUSER}
+      PGPASSWORD: ${PGPASSWORD}
+      PGDATABASE: ${PGDATABASE}
+      SUPERTOKENS_URI: ${SUPERTOKENS_URI}
+      SUPERTOKENS_API_KEY: ${SUPERTOKENS_API_KEY}
+      VALKEY_URL: ${VALKEY_URL}
+      JWT_SECRET: ${JWT_SECRET}
     networks:
       - app-network
       - db-network
@@ -123,6 +120,8 @@ services:
       postgres:
         condition: service_healthy
       valkey:
+        condition: service_healthy
+      supertokens:
         condition: service_healthy
     labels:
       - "traefik.enable=true"
@@ -132,7 +131,7 @@ services:
       - "traefik.http.routers.api.middlewares=rate-limit@file,security-headers@file"
       - "traefik.http.services.api.loadbalancer.server.port=3001"
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:3001/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -145,6 +144,7 @@ services:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/glitchtip?max_connections=5
+      DATABASE_POOL_MAX: 5
       CELERY_BROKER_URL: redis://valkey:6379/1
       SECRET_KEY: ${GLITCHTIP_SECRET_KEY}
       PORT: 8000
@@ -178,6 +178,7 @@ services:
     command: ./bin/run-celery.sh
     environment:
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/glitchtip?max_connections=5
+      DATABASE_POOL_MAX: 5
       CELERY_BROKER_URL: redis://valkey:6379/1
       SECRET_KEY: ${GLITCHTIP_SECRET_KEY}
       GLITCHTIP_MAX_CONNECTIONS: 5
@@ -208,6 +209,7 @@ services:
       AP_POSTGRES_USERNAME: postgres
       AP_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       AP_POSTGRES_POOL_SIZE: 5
+      AP_POSTGRES_MAX_POOL_SIZE: 5
       AP_REDIS_HOST: valkey
       AP_REDIS_PORT: 6379
       AP_ENCRYPTION_KEY: ${AP_ENCRYPTION_KEY}
@@ -242,6 +244,7 @@ services:
       - "3000:3000"
     environment:
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/umami?connection_limit=5
+      DATABASE_POOL_MAX: 5
       APP_SECRET: ${UMAMI_APP_SECRET}
     networks:
       - app-network
