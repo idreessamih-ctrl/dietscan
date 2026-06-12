@@ -1,35 +1,4 @@
 services:
-  traefik:
-    image: traefik:v3.3
-    container_name: dietscan-traefik
-    restart: unless-stopped
-    command:
-      # API / dashboard
-      - "--api.dashboard=true"
-      - "--api.insecure=false"
-      # Entrypoints
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      # Redirect HTTP → HTTPS
-      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
-      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
-      # Let's Encrypt
-      - "--certificatesresolvers.le.acme.email=admin@foodlens.live"
-      - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
-      - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
-      # Docker provider
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=traefik-network"
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - letsencrypt_data:/letsencrypt
-    networks:
-      - traefik-network
-
   postgres:
     image: postgres:17-alpine
     container_name: dietscan-postgres
@@ -90,7 +59,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRESQL_CONNECTION_URI: postgresql://postgres:***@postgres:5432/dietscan_auth
-      API_KEYS: diet_supertokens_key_2024
+      API_KEYS: diet-supertokens-key-2024
       SUPERTOKENS_PORT: 3567
     networks:
       - app-network
@@ -110,6 +79,8 @@ services:
       dockerfile: Dockerfile
     container_name: dietscan-api
     restart: unless-stopped
+    ports:
+      - "3011:3001"
     environment:
       API_PORT: "3001"
       NODE_ENV: production
@@ -122,21 +93,14 @@ services:
       PGPASSWORD: diet_secure_pw_2024
       PGDATABASE: dietscan_core
       SUPERTOKENS_URI: http://supertokens:3567
-      SUPERTOKENS_API_KEY: diet_supertokens_key_2024
+      SUPERTOKENS_API_KEY: diet-supertokens-key-2024
       VALKEY_URL: redis://valkey:6379
       JWT_SECRET: diet_jwt_secret_2024
       MEILI_URL: http://meilisearch:7700
       MEILI_MASTER_KEY: diet_meili_master_key_2024
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.api.rule=Host(`foodlens.live`) || Host(`www.foodlens.live`) || Host(`api.foodlens.live`)"
-      - "traefik.http.routers.api.entrypoints=websecure"
-      - "traefik.http.routers.api.tls.certresolver=le"
-      - "traefik.http.services.api.loadbalancer.server.port=3001"
     networks:
       - app-network
       - db-network
-      - traefik-network
     depends_on:
       postgres:
         condition: service_healthy
@@ -151,8 +115,6 @@ services:
       retries: 5
 
 networks:
-  traefik-network:
-    driver: bridge
   app-network:
     driver: bridge
   db-network:
@@ -162,4 +124,3 @@ volumes:
   postgres_data:
   valkey_data:
   meilisearch_data:
-  letsencrypt_data:
