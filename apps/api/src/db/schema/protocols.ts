@@ -10,6 +10,7 @@ export const dietaryProtocols = pgTable(
     description: text("description"),
     rulesJson: jsonb("rules_json").notNull().default({}),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     index("idx_dietary_protocols_slug").on(table.slug),
@@ -24,6 +25,7 @@ export const educationArticles = pgTable(
     title: varchar("title", { length: 255 }).notNull(),
     content: text("content").notNull(),
     protocolTags: text("protocol_tags").array().notNull().default(sql`ARRAY[]::text[]`),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     index("idx_education_articles_slug").on(table.slug),

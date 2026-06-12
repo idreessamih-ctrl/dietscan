@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { ComplianceReport } from "../lib/complianceEngine";
 
 export interface ScanResult {
+  id?: string;
   barcode?: string;
   name: string;
   brand: string | null;

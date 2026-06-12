@@ -11,6 +11,7 @@ export const products = pgTable(
     brand: varchar("brand", { length: 255 }),
     ingredientsJson: jsonb("ingredients_json").notNull().default([]),
     nutritionJson: jsonb("nutrition_json").default({}),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     index("idx_products_barcode").on(table.barcode),

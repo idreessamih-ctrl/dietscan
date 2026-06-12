@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, jsonb, timestamp } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 export const ingredients = pgTable("ingredients", {
@@ -6,6 +6,7 @@ export const ingredients = pgTable("ingredients", {
   name: varchar("name", { length: 255 }).unique().notNull(),
   category: varchar("category", { length: 100 }).notNull(),
   bannedBy: jsonb("banned_by").notNull().default([]),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const ingredientAliases = pgTable("ingredient_aliases", {

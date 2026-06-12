@@ -19,6 +19,9 @@ import { evaluateCompliance } from "../lib/complianceEngine";
 import { useScanStore } from "../store/scanStore";
 import { useAuth } from "../store/useAuth";
 import { RootStackParamList } from "../navigation/RootNavigator";
+import { getDb, saveProductLocally, saveScanLocally, generateUUID } from "../lib/db";
+import { isOnline } from "../services/sync";
+import { api } from "../services/api";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, "Main">;
 
@@ -116,21 +119,89 @@ export const ScanScreen: React.FC = () => {
       // Evaluate compliance locally
       const complianceReport = await evaluateCompliance(activeProtocol, cleanedIngredients);
 
+      const scanId = generateUUID();
+      const productId = generateUUID();
+      const barcode = `ocr-${productId}`;
+      const scannedAt = new Date().toISOString();
+
       const scanResult = {
+        id: scanId,
+        barcode,
         name: "Ingredient Label Scan",
         brand: null,
         ingredients: cleanedIngredients,
         rawText,
         complianceReport,
-        scannedAt: new Date().toISOString(),
+        scannedAt,
       };
+
+      const online = await isOnline();
+
+      // 1. Save product and scan locally
+      await saveProductLocally({
+        id: productId,
+        barcode,
+        name: scanResult.name,
+        brand: null,
+        ingredients: cleanedIngredients,
+        nutritionFacts: {},
+      });
+
+      await saveScanLocally({
+        id: scanId,
+        product_id: productId,
+        protocol_slug: activeProtocol,
+        passed: complianceReport.passed,
+        violations: complianceReport.violations,
+        scanned_at: scannedAt,
+        synced: false,
+      });
+
+      // 2. Immediate push if online
+      if (online) {
+        try {
+          await api.post("/api/v1/sync/scans", [
+            {
+              id: scanId,
+              product_id: productId,
+              protocol_slug: activeProtocol,
+              passed: complianceReport.passed,
+              violations_json: complianceReport.violations,
+              scanned_at: scannedAt,
+              product: {
+                id: productId,
+                barcode,
+                name: "Ingredient Label Scan",
+                brand: null,
+                ingredients_json: cleanedIngredients,
+                nutrition_json: {},
+              },
+            },
+          ]);
+
+          // Mark as synced locally
+          const db = await getDb();
+          await db.runAsync("UPDATE scans SET synced = 1 WHERE id = ?", [scanId]);
+        } catch (err) {
+          console.warn("[ScanScreen] Immediate sync failed, queued for later sync:", err);
+        }
+      }
 
       // Trigger success haptic
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
       setResult(scanResult);
       setIsProcessing(false);
-      navigation.navigate("ScanResult", { result: scanResult });
+
+      if (!online) {
+        Alert.alert(
+          "Saved Offline",
+          "✅ Saved offline — changes will sync when connected.",
+          [{ text: "OK", onPress: () => navigation.navigate("ScanResult", { result: scanResult }) }]
+        );
+      } else {
+        navigation.navigate("ScanResult", { result: scanResult });
+      }
     } catch (error) {
       console.error("[ScanScreen] OCR processing error:", error);
       setIsProcessing(false);

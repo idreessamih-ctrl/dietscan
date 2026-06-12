@@ -16,6 +16,7 @@ import scansRouter from "./routes/scans";
 import productsRouter from "./routes/products";
 import searchRouter from "./routes/search";
 import clicksRouter from "./routes/clicks";
+import syncRouter from "./routes/sync";
 import { initMeilisearch } from "./lib/meilisearch";
 
 // Initialize SuperTokens
@@ -71,6 +72,7 @@ app.use("/api/auth", authRouter);
 app.use("/scans", scansRouter);
 app.use("/products", productsRouter);
 app.use("/search", searchRouter);
+app.use("/api/v1/sync", syncRouter);
 app.use("/", searchRouter);
 app.use("/", clicksRouter);
 

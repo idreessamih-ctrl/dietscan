@@ -13,7 +13,8 @@ CREATE TABLE dietary_protocols (
     name VARCHAR(100) NOT NULL,
     description TEXT,
     rules_json JSONB NOT NULL DEFAULT '{}'::jsonb,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 2. users
@@ -29,7 +30,8 @@ CREATE TABLE ingredients (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(255) UNIQUE NOT NULL,
     category VARCHAR(100) NOT NULL,
-    banned_by JSONB NOT NULL DEFAULT '[]'::jsonb
+    banned_by JSONB NOT NULL DEFAULT '[]'::jsonb,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 4. ingredient_aliases
@@ -53,7 +55,8 @@ CREATE TABLE products (
     name VARCHAR(255) NOT NULL,
     brand VARCHAR(255),
     ingredients_json JSONB NOT NULL DEFAULT '[]'::jsonb,
-    nutrition_json JSONB DEFAULT '{}'::jsonb
+    nutrition_json JSONB DEFAULT '{}'::jsonb,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 7. scans
@@ -115,7 +118,8 @@ CREATE TABLE education_articles (
     slug VARCHAR(100) UNIQUE NOT NULL,
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
-    protocol_tags TEXT[] NOT NULL DEFAULT '{}'
+    protocol_tags TEXT[] NOT NULL DEFAULT '{}',
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 14. affiliate_retailers

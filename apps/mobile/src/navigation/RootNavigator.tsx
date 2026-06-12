@@ -7,6 +7,8 @@ import { MainTabs } from "./MainTabs";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ScanResultScreen } from "../screens/ScanResultScreen";
 import { ScanResult } from "../store/scanStore";
+import { OfflineIndicator } from "../components/OfflineIndicator";
+import { startAutoSync, stopAutoSync } from "../services/sync";
 
 export type RootStackParamList = {
   Auth: undefined;
@@ -21,6 +23,10 @@ export const RootNavigator = () => {
 
   useEffect(() => {
     initialize();
+    startAutoSync();
+    return () => {
+      stopAutoSync();
+    };
   }, [initialize]);
 
   if (isLoading) {
@@ -28,17 +34,20 @@ export const RootNavigator = () => {
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {session ? (
-          <>
-            <Stack.Screen name="Main" component={MainTabs} />
-            <Stack.Screen name="ScanResult" component={ScanResultScreen} />
-          </>
-        ) : (
-          <Stack.Screen name="Auth" component={AuthStack} />
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+    <>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          {session ? (
+            <>
+              <Stack.Screen name="Main" component={MainTabs} />
+              <Stack.Screen name="ScanResult" component={ScanResultScreen} />
+            </>
+          ) : (
+            <Stack.Screen name="Auth" component={AuthStack} />
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+      <OfflineIndicator />
+    </>
   );
 };

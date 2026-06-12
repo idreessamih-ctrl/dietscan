@@ -1,9 +1,12 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as Haptics from "expo-haptics";
 import { RootStackParamList } from "../navigation/RootNavigator";
 import { useAuth } from "../store/useAuth";
+import { getDb, generateUUID } from "../lib/db";
+import { isOnline } from "../services/sync";
+import { api } from "../services/api";
 
 type Props = NativeStackScreenProps<RootStackParamList, "ScanResult">;
 
@@ -14,7 +17,96 @@ export const ScanResultScreen: React.FC<Props> = ({ route, navigation }) => {
 
   const handleLogToJournal = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    alert("Log to Journal: Product logged successfully!");
+    
+    try {
+      const db = await getDb();
+      
+      // 1. Resolve product ID from SQLite
+      let productId = "";
+      if (result.barcode) {
+        const row = await db.getFirstAsync<{ id: string }>(
+          "SELECT id FROM products WHERE barcode = ?",
+          [result.barcode]
+        );
+        if (row) productId = row.id;
+      }
+      
+      if (!productId && result.id) {
+        const row = await db.getFirstAsync<{ product_id: string }>(
+          "SELECT product_id FROM scans WHERE id = ?",
+          [result.id]
+        );
+        if (row) productId = row.product_id;
+      }
+      
+      if (!productId) {
+        // Fallback: search by name, or generate a dummy product ID if not found
+        const row = await db.getFirstAsync<{ id: string }>(
+          "SELECT id FROM products WHERE name = ? LIMIT 1",
+          [result.name]
+        );
+        if (row) {
+          productId = row.id;
+        } else {
+          productId = generateUUID();
+          // Insert a fallback product to satisfy foreign keys
+          const timestamp = new Date().toISOString();
+          await db.runAsync(
+            `INSERT OR IGNORE INTO products (id, barcode, name, brand, ingredients_json, nutrition_json, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [productId, result.barcode || `ocr-${productId}`, result.name, result.brand, JSON.stringify(result.ingredients), JSON.stringify(result.nutritionFacts || {}), timestamp]
+          );
+        }
+      }
+
+      // 2. Determine meal type based on hour
+      const hour = new Date().getHours();
+      let mealType: "breakfast" | "lunch" | "dinner" | "snack" = "snack";
+      if (hour >= 5 && hour < 11) mealType = "breakfast";
+      else if (hour >= 11 && hour < 16) mealType = "lunch";
+      else if (hour >= 17 && hour < 22) mealType = "dinner";
+
+      const journalId = generateUUID();
+      const createdAt = new Date().toISOString();
+
+      // 3. Save meal journal entry locally
+      await db.runAsync(
+        `INSERT INTO meal_journal (id, meal_type, product_id, compliance_score, created_at, synced)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [journalId, mealType, productId, score, createdAt, 0]
+      );
+
+      const online = await isOnline();
+
+      // 4. Sync immediately if online
+      if (online) {
+        try {
+          await api.post("/api/v1/sync/journal", [
+            {
+              id: journalId,
+              meal_type: mealType,
+              compliance_score: score,
+              created_at: createdAt,
+            },
+          ]);
+
+          // Mark as synced locally
+          await db.runAsync("UPDATE meal_journal SET synced = 1 WHERE id = ?", [journalId]);
+        } catch (err) {
+          console.warn("[ScanResultScreen] Immediate journal sync failed, queued for later sync:", err);
+        }
+      }
+
+      // 5. Display success alert
+      if (online) {
+        Alert.alert("Logged to Journal", "Meal logged and synced successfully!");
+      } else {
+        Alert.alert("Logged to Journal", "✅ Saved offline — changes will sync when connected.");
+      }
+    } catch (error: any) {
+      console.error("[ScanResultScreen] Failed to log meal:", error);
+      Alert.alert("Logging Error", "Failed to log meal to journal. Please try again.");
+    }
   };
 
   const handleFindAlternatives = async () => {
