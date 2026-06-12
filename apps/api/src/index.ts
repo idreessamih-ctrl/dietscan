@@ -22,6 +22,7 @@ import mealPlansRouter from "./routes/meal-planner";
 import notificationsRouter from "./routes/notifications";
 import journalRouter from "./routes/journal";
 import nutritionRouter from "./routes/nutrition";
+import gdprRouter from "./routes/gdpr";
 import { initMeilisearch } from "./lib/meilisearch";
 import { startScheduler } from "./lib/scheduler";
 
@@ -86,6 +87,7 @@ app.use("/meal-plans", mealPlansRouter);
 app.use("/notifications", notificationsRouter);
 app.use("/journal", journalRouter);
 app.use("/nutrition", nutritionRouter);
+app.use("/gdpr", gdprRouter);
 
 // SuperTokens error handler (must be registered after all routes but before the custom error handler)
 app.use(superTokensErrorHandler());
@@ -96,11 +98,15 @@ app.use(errorHandler);
 // Sentry error handler (must be LAST middleware)
 Sentry.setupExpressErrorHandler(app);
 
-app.listen(config.API_PORT, () => {
-  console.log(`[API] Server is listening on port ${config.API_PORT} in ${config.NODE_ENV} mode`);
-  // Initialize Meilisearch index settings asynchronously on start
-  initMeilisearch().catch(err => console.error("Meilisearch initialization failed:", err));
-  // Start the background push notification scheduler
-  startScheduler();
-});
+if (process.env.NODE_ENV !== "test") {
+  app.listen(config.API_PORT, () => {
+    console.log(`[API] Server is listening on port ${config.API_PORT} in ${config.NODE_ENV} mode`);
+    // Initialize Meilisearch index settings asynchronously on start
+    initMeilisearch().catch(err => console.error("Meilisearch initialization failed:", err));
+    // Start the background push notification scheduler
+    startScheduler();
+  });
+}
+
+export default app;
 

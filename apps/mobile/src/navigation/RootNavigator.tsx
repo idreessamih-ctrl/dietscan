@@ -6,6 +6,9 @@ import { AuthStack } from "./AuthStack";
 import { MainTabs } from "./MainTabs";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ScanResultScreen } from "../screens/ScanResultScreen";
+import { PrivacyScreen } from "../screens/PrivacyScreen";
+import { DataExportScreen } from "../screens/DataExportScreen";
+import { DeleteAccountScreen } from "../screens/DeleteAccountScreen";
 import { ScanResult } from "../store/scanStore";
 import { OfflineIndicator } from "../components/OfflineIndicator";
 import { startAutoSync, stopAutoSync } from "../services/sync";
@@ -21,6 +24,9 @@ export type RootStackParamList = {
   Auth: undefined;
   Main: NavigatorScreenParams<MainTabParamList>;
   ScanResult: { result: ScanResult };
+  Privacy: undefined;
+  DataExport: undefined;
+  DeleteAccount: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -63,6 +69,9 @@ export const RootNavigator = () => {
             <>
               <Stack.Screen name="Main" component={MainTabs} />
               <Stack.Screen name="ScanResult" component={ScanResultScreen} />
+              <Stack.Screen name="Privacy" component={PrivacyScreen} />
+              <Stack.Screen name="DataExport" component={DataExportScreen} />
+              <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
             </>
           ) : (
             <Stack.Screen name="Auth" component={AuthStack} />

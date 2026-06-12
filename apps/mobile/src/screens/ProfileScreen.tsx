@@ -1,8 +1,10 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useAuth } from "../store/useAuth";
+import { useNavigation } from "@react-navigation/native";
 
 export const ProfileScreen = () => {
   const { user, signOut } = useAuth();
+  const navigation = useNavigation<{ navigate: (screen: string) => void }>();
 
   const handleSignOut = async () => {
     try {
@@ -33,6 +35,33 @@ export const ProfileScreen = () => {
         <Text style={styles.subtitle}>No user logged in.</Text>
       )}
 
+      {user ? (
+        <View style={styles.gdprBox}>
+          <Text style={styles.gdprTitle}>GDPR & Privacy</Text>
+          
+          <TouchableOpacity 
+            style={styles.actionButton} 
+            onPress={() => navigation.navigate("Privacy")}
+          >
+            <Text style={styles.actionButtonText}>📄 Privacy Policy</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.actionButton} 
+            onPress={() => navigation.navigate("DataExport")}
+          >
+            <Text style={styles.actionButtonText}>📦 Export My Data</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.dangerButton]} 
+            onPress={() => navigation.navigate("DeleteAccount")}
+          >
+            <Text style={styles.dangerButtonText}>⚠️ Delete Account</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
       <TouchableOpacity style={styles.button} onPress={handleSignOut}>
         <Text style={styles.buttonText}>Sign Out</Text>
       </TouchableOpacity>
@@ -49,8 +78,8 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   emoji: {
-    fontSize: 64,
-    marginBottom: 20,
+    fontSize: 48,
+    marginBottom: 10,
   },
   title: {
     color: "#f9fafb",
@@ -60,12 +89,55 @@ const styles = StyleSheet.create({
   },
   profileBox: {
     backgroundColor: "#1f2937",
-    padding: 20,
+    padding: 16,
     borderRadius: 8,
     width: "100%",
-    marginBottom: 30,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: "#374151",
+  },
+  gdprBox: {
+    backgroundColor: "#1f2937",
+    padding: 16,
+    borderRadius: 8,
+    width: "100%",
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: "#374151",
+  },
+  gdprTitle: {
+    color: "#f9fafb",
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#374151",
+    paddingBottom: 6,
+  },
+  actionButton: {
+    backgroundColor: "#374151",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    marginBottom: 10,
+    alignItems: "flex-start",
+    width: "100%",
+  },
+  actionButtonText: {
+    color: "#f9fafb",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  dangerButton: {
+    backgroundColor: "#7f1d1d",
+    borderColor: "#b91c1c",
+    borderWidth: 1,
+    marginBottom: 0,
+  },
+  dangerButtonText: {
+    color: "#fca5a5",
+    fontSize: 14,
+    fontWeight: "600",
   },
   label: {
     color: "#9ca3af",
@@ -75,9 +147,9 @@ const styles = StyleSheet.create({
   },
   value: {
     color: "#f9fafb",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "500",
-    marginBottom: 16,
+    marginBottom: 10,
   },
   subtitle: {
     color: "#9ca3af",

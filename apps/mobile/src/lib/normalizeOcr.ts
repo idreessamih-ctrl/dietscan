@@ -21,20 +21,41 @@ export function getLevenshteinDistance(a: string, b: string): number {
   return dp[a.length][b.length];
 }
 
-/**
- * Splits raw OCR text into individual raw ingredient tokens.
- * Splits on commas, semicolons, newlines, and bullet points.
- */
 function splitIntoRawTokens(text: string): string[] {
   const cleanText = text
     .replace(/[•▪●*▪\-▪\u2022\u2023\u25E6\u2043]/g, ",")
     .replace(/;/g, ",")
     .replace(/\r\n/g, "\n");
 
-  return cleanText
-    .split(/,|\n/)
-    .map((t) => t.trim())
-    .filter((t) => t.length > 0);
+  const tokens: string[] = [];
+  let current = "";
+  let parenCount = 0;
+
+  for (let i = 0; i < cleanText.length; i++) {
+    const char = cleanText[i];
+    if (char === "(") {
+      parenCount++;
+      current += char;
+    } else if (char === ")") {
+      parenCount = Math.max(0, parenCount - 1);
+      current += char;
+    } else if (parenCount === 0 && (char === "," || char === "\n")) {
+      const trimmed = current.trim();
+      if (trimmed.length > 0) {
+        tokens.push(trimmed);
+      }
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+
+  const trimmed = current.trim();
+  if (trimmed.length > 0) {
+    tokens.push(trimmed);
+  }
+
+  return tokens;
 }
 
 /**

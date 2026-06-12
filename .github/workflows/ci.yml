@@ -1,0 +1,115 @@
+name: M11 CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    name: Lint Codebase
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: |
+            apps/api/package-lock.json
+            apps/mobile/package-lock.json
+
+      - name: Install API Dependencies
+        run: npm ci --legacy-peer-deps
+        working-directory: apps/api
+
+      - name: Lint API
+        run: npm run lint
+        working-directory: apps/api
+
+      - name: Install Mobile Dependencies
+        run: npm ci --legacy-peer-deps
+        working-directory: apps/mobile
+
+      - name: Lint Mobile
+        run: npm run lint
+        working-directory: apps/mobile
+
+  typecheck:
+    name: Typecheck TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: |
+            apps/api/package-lock.json
+            apps/mobile/package-lock.json
+
+      - name: Install API Dependencies
+        run: npm ci --legacy-peer-deps
+        working-directory: apps/api
+
+      - name: Typecheck API
+        run: npx tsc --noEmit
+        working-directory: apps/api
+
+      - name: Install Mobile Dependencies
+        run: npm ci --legacy-peer-deps
+        working-directory: apps/mobile
+
+      - name: Typecheck Mobile
+        run: npm run ts:check
+        working-directory: apps/mobile
+
+  test:
+    name: Run API Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: |
+            apps/api/package-lock.json
+
+      - name: Install API Dependencies
+        run: npm ci --legacy-peer-deps
+        working-directory: apps/api
+
+      - name: Run API Tests
+        run: npm test
+        working-directory: apps/api
+
+  build:
+    name: Test Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build API Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./apps/api
+          file: ./apps/api/Dockerfile
+          push: false
+          tags: dietscan-api:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
