@@ -20,6 +20,8 @@ import syncRouter from "./routes/sync";
 import shoppingRouter from "./routes/shopping";
 import mealPlansRouter from "./routes/meal-planner";
 import notificationsRouter from "./routes/notifications";
+import journalRouter from "./routes/journal";
+import nutritionRouter from "./routes/nutrition";
 import { initMeilisearch } from "./lib/meilisearch";
 import { startScheduler } from "./lib/scheduler";
 
@@ -82,6 +84,8 @@ app.use("/", clicksRouter);
 app.use("/shopping", shoppingRouter);
 app.use("/meal-plans", mealPlansRouter);
 app.use("/notifications", notificationsRouter);
+app.use("/journal", journalRouter);
+app.use("/nutrition", nutritionRouter);
 
 // SuperTokens error handler (must be registered after all routes but before the custom error handler)
 app.use(superTokensErrorHandler());

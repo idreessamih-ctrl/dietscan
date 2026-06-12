@@ -6,9 +6,13 @@ import {
   FlatList,
   ActivityIndicator,
   RefreshControl,
+  TouchableOpacity,
+  Alert,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { getDb } from "../lib/db";
+import { isOnline } from "../services/sync";
+import { api } from "../services/api";
 
 interface JournalEntry {
   id: string;
@@ -62,6 +66,40 @@ export const JournalScreen = () => {
       setIsLoading(false);
       setIsRefreshing(false);
     }
+  };
+
+  const deleteEntry = async (id: string) => {
+    Alert.alert(
+      "Delete Entry",
+      "Are you sure you want to delete this meal journal entry?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const db = await getDb();
+              await db.runAsync("DELETE FROM meal_journal WHERE id = ?", [id]);
+              
+              const online = await isOnline();
+              if (online) {
+                try {
+                  await api.delete(`/journal/${id}`);
+                } catch (err) {
+                  console.warn("[JournalScreen] Server deletion failed, will be deleted on next sync or ignored:", err);
+                }
+              }
+              
+              setEntries((prev) => prev.filter((entry) => entry.id !== id));
+            } catch (error) {
+              console.error("[JournalScreen] Failed to delete entry:", error);
+              Alert.alert("Error", "Failed to delete the journal entry.");
+            }
+          },
+        },
+      ]
+    );
   };
 
   // Reload data whenever the screen gets focus
@@ -140,6 +178,9 @@ export const JournalScreen = () => {
         </View>
 
         <View style={styles.cardFooter}>
+          <TouchableOpacity onPress={() => deleteEntry(item.id)} style={styles.deleteButton}>
+            <Text style={styles.deleteButtonText}>🗑️ Delete</Text>
+          </TouchableOpacity>
           <Text style={[styles.syncStatus, item.synced === 1 ? styles.syncedText : styles.pendingText]}>
             {item.synced === 1 ? "☁️ Synced" : "⏳ Pending sync"}
           </Text>
@@ -282,6 +323,18 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     flexDirection: "row",
     justifyContent: "flex-end",
+  },
+  deleteButton: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    backgroundColor: "rgba(239, 68, 68, 0.1)",
+    marginRight: "auto",
+  },
+  deleteButtonText: {
+    color: "#ef4444",
+    fontSize: 12,
+    fontWeight: "bold",
   },
   syncStatus: {
     fontSize: 11,
