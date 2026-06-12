@@ -4,10 +4,10 @@ services:
     container_name: dietscan-postgres
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "5438:5432"
     command: ["postgres", "-c", "shared_buffers=512MB", "-c", "max_connections=100"]
     environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: diet_secure_pw_2024
       POSTGRES_USER: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -26,7 +26,7 @@ services:
     container_name: dietscan-valkey
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "6389:6379"
     command: ["valkey-server", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
     volumes:
       - valkey_data:/data
@@ -47,21 +47,14 @@ services:
     environment:
       MEILI_ENV: development
       MEILI_NO_ANALYTICS: "true"
-      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+      MEILI_MASTER_KEY: diet_meili_master_key_2024
     volumes:
       - meilisearch_data:/meili_data
     networks:
       - app-network
       - db-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.meilisearch.rule=Host(`${MEILISEARCH_HOST}`)"
-      - "traefik.http.routers.meilisearch.entrypoints=websecure"
-      - "traefik.http.routers.meilisearch.tls.certresolver=le"
-      - "traefik.http.routers.meilisearch.middlewares=rate-limit@file,security-headers@file"
-      - "traefik.http.services.meilisearch.loadbalancer.server.port=7700"
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:7700/health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:7700/health 2>/dev/null || curl -sf http://localhost:7700/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -73,22 +66,15 @@ services:
     ports:
       - "3567:3567"
     environment:
-      POSTGRESQL_CONNECTION_URI: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/dietscan_auth
+      POSTGRESQL_CONNECTION_URI: postgresql://postgres:diet_secure_pw_2024@postgres:5432/dietscan_auth
     networks:
       - app-network
       - db-network
     depends_on:
       postgres:
         condition: service_healthy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.supertokens.rule=Host(`${SUPERTOKENS_HOST}`)"
-      - "traefik.http.routers.supertokens.entrypoints=websecure"
-      - "traefik.http.routers.supertokens.tls.certresolver=le"
-      - "traefik.http.routers.supertokens.middlewares=rate-limit@file,security-headers@file"
-      - "traefik.http.services.supertokens.loadbalancer.server.port=3567"
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3567/hello || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3567/hello 2>/dev/null || curl -sf http://localhost:3567/hello || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -100,23 +86,23 @@ services:
     container_name: dietscan-api
     restart: unless-stopped
     ports:
-      - "3001:3001"
+      - "3011:3001"
     environment:
-      API_PORT: ${API_PORT}
-      NODE_ENV: ${NODE_ENV}
-      API_DOMAIN: ${API_DOMAIN}
-      WEBSITE_DOMAIN: ${WEBSITE_DOMAIN}
-      PGHOST: ${PGHOST}
-      PGPORT: ${PGPORT}
-      PGUSER: ${PGUSER}
-      PGPASSWORD: ${PGPASSWORD}
-      PGDATABASE: ${PGDATABASE}
-      SUPERTOKENS_URI: ${SUPERTOKENS_URI}
-      SUPERTOKENS_API_KEY: ${SUPERTOKENS_API_KEY}
-      VALKEY_URL: ${VALKEY_URL}
-      JWT_SECRET: ${JWT_SECRET}
+      API_PORT: "3001"
+      NODE_ENV: production
+      API_DOMAIN: http://109.199.106.147:3011
+      WEBSITE_DOMAIN: http://109.199.106.147:3011
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: diet_secure_pw_2024
+      PGDATABASE: dietscan_core
+      SUPERTOKENS_URI: http://supertokens:3567
+      SUPERTOKENS_API_KEY: diet_supertokens_key_2024
+      VALKEY_URL: redis://valkey:6379
+      JWT_SECRET: diet_jwt_secret_2024
       MEILI_URL: http://meilisearch:7700
-      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+      MEILI_MASTER_KEY: diet_meili_master_key_2024
     networks:
       - app-network
       - db-network
@@ -126,182 +112,21 @@ services:
       valkey:
         condition: service_healthy
       supertokens:
-        condition: service_healthy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.api.rule=Host(`${API_HOST}`)"
-      - "traefik.http.routers.api.entrypoints=websecure"
-      - "traefik.http.routers.api.tls.certresolver=le"
-      - "traefik.http.routers.api.middlewares=rate-limit@file,security-headers@file"
-      - "traefik.http.services.api.loadbalancer.server.port=3001"
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3001/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  glitchtip:
-    image: gitlab.com/glitchtip/glitchtip:latest
-    container_name: dietscan-glitchtip
-    restart: unless-stopped
-    ports:
-      - "8000:8000"
-    environment:
-      DATABASE_URL: postgres://dietscan:${POSTGRES_PASSWORD}@postgres:5432/glitchtip
-      DATABASE_POOL_MAX: 5
-      CELERY_BROKER_URL: redis://valkey:6379/0
-      SECRET_KEY: ${GLITCHTIP_SECRET_KEY}
-      GLITCHTIP_DOMAIN: https://${GLITCHTIP_HOST}
-      GLITCHTIP_MAX_CONNECTIONS: 5
-    networks:
-      - app-network
-      - db-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      valkey:
-        condition: service_healthy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.glitchtip.rule=Host(`${GLITCHTIP_HOST}`)"
-      - "traefik.http.routers.glitchtip.entrypoints=websecure"
-      - "traefik.http.routers.glitchtip.tls.certresolver=le"
-      - "traefik.http.routers.glitchtip.middlewares=rate-limit@file,security-headers@file"
-      - "traefik.http.services.glitchtip.loadbalancer.server.port=8000"
-    healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8000/ || exit 1"]
-      interval: 20s
-      timeout: 10s
-      retries: 5
-
-  glitchtip-worker:
-    image: gitlab.com/glitchtip/glitchtip:latest
-    container_name: dietscan-glitchtip-worker
-    restart: unless-stopped
-    command: ./manage.py celery
-    environment:
-      DATABASE_URL: postgres://dietscan:password@postgres:5432/glitchtip
-      DATABASE_POOL_MAX: 5
-      CELERY_BROKER_URL: redis://valkey:6379/1
-      SECRET_KEY: ${GLITCHTIP_SECRET_KEY}
-      GLITCHTIP_MAX_CONNECTIONS: 5
-    networks:
-      - db-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      valkey:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "ps aux | grep celery | grep -v grep || exit 1"]
-      interval: 20s
-      timeout: 10s
-      retries: 5
-
-  activepieces:
-    image: activepieces/activepieces:0.48.0
-    container_name: dietscan-activepieces
-    restart: unless-stopped
-    ports:
-      - "8080:80"
-    environment:
-      AP_EXECUTION_MODE: UNSANDBOXED
-      AP_POSTGRES_DATABASE: activepieces
-      AP_POSTGRES_HOST: postgres
-      AP_POSTGRES_PORT: 5432
-      AP_POSTGRES_USERNAME: postgres
-      AP_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      AP_POSTGRES_POOL_SIZE: 5
-      AP_POSTGRES_MAX_POOL_SIZE: 5
-      AP_REDIS_HOST: valkey
-      AP_REDIS_PORT: 6379
-      AP_ENCRYPTION_KEY: ${AP_ENCRYPTION_KEY}
-      AP_JWT_SECRET: ${AP_JWT_SECRET}
-      AP_FRONTEND_URL: https://${ACTIVEPIECES_HOST}
-    networks:
-      - app-network
-      - db-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      valkey:
-        condition: service_healthy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.activepieces.rule=Host(`${ACTIVEPIECES_HOST}`)"
-      - "traefik.http.routers.activepieces.entrypoints=websecure"
-      - "traefik.http.routers.activepieces.tls.certresolver=le"
-      - "traefik.http.routers.activepieces.middlewares=rate-limit@file,security-headers@file"
-      - "traefik.http.services.activepieces.loadbalancer.server.port=80"
-    healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:80/ || exit 1"]
-      interval: 20s
-      timeout: 10s
-      retries: 5
-
-  umami:
-    image: ghcr.io/umami-software/umami:postgresql-latest
-    container_name: dietscan-umami
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    environment:
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/umami?connection_limit=5
-      DATABASE_POOL_MAX: 5
-      APP_SECRET: ${UMAMI_APP_SECRET}
-    networks:
-      - app-network
-      - db-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.umami.rule=Host(`${UMAMI_HOST}`)"
-      - "traefik.http.routers.umami.entrypoints=websecure"
-      - "traefik.http.routers.umami.tls.certresolver=le"
-      - "traefik.http.routers.umami.middlewares=rate-limit@file,security-headers@file"
-      - "traefik.http.services.umami.loadbalancer.server.port=3000"
-    healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1"]
-      interval: 20s
-      timeout: 10s
-      retries: 5
-
-  traefik:
-    image: traefik:v3.3
-    container_name: dietscan-traefik
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
-      - traefik_acme:/etc/traefik/acme
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:80/ping || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
 networks:
   app-network:
-    name: app-network
     driver: bridge
   db-network:
-    name: db-network
     driver: bridge
 
 volumes:
   postgres_data:
-    name: dietscan_postgres_data
   valkey_data:
-    name: dietscan_valkey_data
   meilisearch_data:
-    name: dietscan_meili_data
-  traefik_acme:
-    name: dietscan_traefik_acme
+
