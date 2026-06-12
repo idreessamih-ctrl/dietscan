@@ -1,0 +1,110 @@
+http:
+  routers:
+    api:
+      rule: "Host(`api.dietscan.example.com`)"
+      entryPoints:
+        - websecure
+      service: api
+      tls:
+        certResolver: le
+      middlewares:
+        - rate-limit
+        - security-headers
+
+    meilisearch:
+      rule: "Host(`search.dietscan.example.com`)"
+      entryPoints:
+        - websecure
+      service: meilisearch
+      tls:
+        certResolver: le
+      middlewares:
+        - rate-limit
+        - security-headers
+
+    supertokens:
+      rule: "Host(`auth.dietscan.example.com`)"
+      entryPoints:
+        - websecure
+      service: supertokens
+      tls:
+        certResolver: le
+      middlewares:
+        - rate-limit
+        - security-headers
+
+    glitchtip:
+      rule: "Host(`errors.dietscan.example.com`)"
+      entryPoints:
+        - websecure
+      service: glitchtip
+      tls:
+        certResolver: le
+      middlewares:
+        - rate-limit
+        - security-headers
+
+    activepieces:
+      rule: "Host(`flow.dietscan.example.com`)"
+      entryPoints:
+        - websecure
+      service: activepieces
+      tls:
+        certResolver: le
+      middlewares:
+        - rate-limit
+        - security-headers
+
+    umami:
+      rule: "Host(`analytics.dietscan.example.com`)"
+      entryPoints:
+        - websecure
+      service: umami
+      tls:
+        certResolver: le
+      middlewares:
+        - rate-limit
+        - security-headers
+
+  services:
+    api:
+      loadBalancer:
+        servers:
+          - url: "http://api:3001"
+    meilisearch:
+      loadBalancer:
+        servers:
+          - url: "http://meilisearch:7700"
+    supertokens:
+      loadBalancer:
+        servers:
+          - url: "http://supertokens:3567"
+    glitchtip:
+      loadBalancer:
+        servers:
+          - url: "http://glitchtip:8000"
+    activepieces:
+      loadBalancer:
+        servers:
+          - url: "http://activepieces:8080"
+    umami:
+      loadBalancer:
+        servers:
+          - url: "http://umami:3000"
+
+  middlewares:
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50
+    security-headers:
+      headers:
+        sslRedirect: true
+        forceSTSHeader: true
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "same-origin"
+        customFrameOptionsValue: "SAMEORIGIN"

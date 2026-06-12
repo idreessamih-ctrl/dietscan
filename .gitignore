@@ -1,0 +1,21 @@
+# Environment variables
+.env
+
+# Database and runtime state directories (if locally bound)
+/db/data/
+/data/
+
+# Traefik ACME certificates
+/traefik/acme/
+acme.json
+
+# Node modules & build artifacts (for future API)
+node_modules/
+dist/
+build/
+*.log
+
+# OS & IDE directories
+.DS_Store
+.vscode/
+.idea/
