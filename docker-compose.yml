@@ -58,7 +58,7 @@ services:
     container_name: dietscan-supertokens
     restart: unless-stopped
     environment:
-      POSTGRESQL_CONNECTION_URI: postgresql://postgres:***@postgres:5432/dietscan_auth
+      POSTGRESQL_CONNECTION_URI: postgresql://postgres:diet_secure_pw_2024@postgres:5432/dietscan_auth
       API_KEYS: diet-supertokens-key-2024
       SUPERTOKENS_PORT: 3567
     networks:
