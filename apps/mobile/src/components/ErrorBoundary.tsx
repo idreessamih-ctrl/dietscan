@@ -1,5 +1,6 @@
 import { Component, ErrorInfo, ReactNode } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from "react-native";
+import { Sentry } from "../services/sentry";
 
 interface Props {
   children?: ReactNode;
@@ -22,8 +23,13 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("ErrorBoundary caught an error:", error, errorInfo);
-    // Future integration placeholder: Log error to GlitchTip
+    Sentry.captureException(error, {
+      extra: {
+        componentStack: errorInfo.componentStack,
+      },
+    });
   }
+
 
   private handleReset = () => {
     this.setState({ hasError: false, error: null });

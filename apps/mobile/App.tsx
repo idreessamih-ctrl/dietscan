@@ -3,11 +3,12 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ErrorBoundary } from "./src/components/ErrorBoundary";
 import { RootNavigator } from "./src/navigation/RootNavigator";
 import { initAuth } from "./src/services/auth";
+import { Sentry } from "./src/services/sentry";
 
 // Initialize SuperTokens React Native
 initAuth();
 
-export default function App() {
+function App() {
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
@@ -17,3 +18,6 @@ export default function App() {
     </ErrorBoundary>
   );
 }
+
+export default Sentry.wrap(App);
+

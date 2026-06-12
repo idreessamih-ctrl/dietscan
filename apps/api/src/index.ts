@@ -1,3 +1,5 @@
+import "./lib/sentry";
+import * as Sentry from "@sentry/node";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -13,6 +15,7 @@ import authRouter from "./routes/auth";
 import scansRouter from "./routes/scans";
 import productsRouter from "./routes/products";
 import searchRouter from "./routes/search";
+import clicksRouter from "./routes/clicks";
 import { initMeilisearch } from "./lib/meilisearch";
 
 // Initialize SuperTokens
@@ -69,6 +72,7 @@ app.use("/scans", scansRouter);
 app.use("/products", productsRouter);
 app.use("/search", searchRouter);
 app.use("/", searchRouter);
+app.use("/", clicksRouter);
 
 // SuperTokens error handler (must be registered after all routes but before the custom error handler)
 app.use(superTokensErrorHandler());
@@ -76,8 +80,12 @@ app.use(superTokensErrorHandler());
 // Global custom error handler
 app.use(errorHandler);
 
+// Sentry error handler (must be LAST middleware)
+Sentry.setupExpressErrorHandler(app);
+
 app.listen(config.API_PORT, () => {
   console.log(`[API] Server is listening on port ${config.API_PORT} in ${config.NODE_ENV} mode`);
   // Initialize Meilisearch index settings asynchronously on start
   initMeilisearch().catch(err => console.error("Meilisearch initialization failed:", err));
 });
+
